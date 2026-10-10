@@ -1,0 +1,311 @@
+== MicroDom ==
+
+microdom                Sevicio de interface de domotica domiciliario para el HW
+microdom_abm            Interface WEB del sistema de domotica
+microdom_web            Estructura web del Sevicio de domotica domiciliario
+microdom_task           Gestión de tareas del Sevicio de domotica domiciliario
+
+microdom_coud           Centralizador en la nube
+microdom_coud_web       Estructura web del centralizador en la nube
+
+
+
+
+== Instalacione en un server para desarrollo
+apt install sudo build-essential vim net-tools nfs-common mc minicom libcjson1 libcjson-dev libssl-dev xinetd apache2 php libapache2-mod-php default-mysql-client default-libmysqlclient-dev dos2unix curl git tcpdump anacron openssl jq
+apt install nmap
+
+== Intslaciones para python y docker
+apt update
+apt install -y ca-certificates curl gnupg lsb-release
+
+install -m 0755 -d /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/debian/gpg | \
+gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/debian \
+  $(lsb_release -cs) stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt update
+
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt install python3.13-venv
+
+systemctl status docker
+
+no hace falta - apt install skopeo 
+
+
+==========================================================================================
+Servicio de domotica domiciliario
+Se ejecuta en forma local en el hogar y coordina la operaciones de los disositivos de
+interface de domotica, teclas, display, actuadores, sensores, etc.
+==========================================================================================
+
+Crear entorno virtual:
+    python -m venv microdom
+
+Entrar a entorno virtual:
+    source microdom/bin/activate
+
+Salir de entorno virtual
+    deactivate
+
+Docker
+==========================================================================================
+
+Crear imagen utilizando DockerFile con etiqueta microdom
+    docker build -t microdom .
+
+Ejecutar contenedor redirijiendo puerto local 8080 a puerto 8080 del contenedor
+    docker run -p 8080:8080 microdom
+Daemon:
+    docker run -d -p 8080:8080 --restart unless-stopped microdom
+
+Comando Docker:
+    docker ps
+    docker ps -a
+    docker container prune (Borra los exited)
+    docker rm 424c42019953 (Borra el ID)
+    
+    docker stop boring_kapitsa
+    docker update --restart unless-stopped boring_kapitsa
+    docker start boring_kapitsa
+
+Ejecutar el contenedor con un volumen persistente
+
+docker run -p 8080:8080 -v /var/log/microdom:/app/logs -v /etc:/app/etc microdom
+docker run -d -p 8080:8080 --restart unless-stopped --name microdom -v /var/log/microdom:/app/logs -v /etc:/app/etc microdom
+
+Ejecutar el contenedor con volumen persistente y variables de entorno
+
+docker run --rm -it \
+  -e DBUSER=dompi_web \
+  -e DBPASSWORD=dompi_web \
+  -e DBHOST=192.168.10.32 \
+  -e DBNAME=DB_DOMPIWEB \
+  --name microdom \
+  -v /etc/microdom.conf:/app/etc/microdom.conf \
+  -v /var/log/microdom:/app/logs \
+  -v /var/lib/microdom/html:/app/html \
+  -v /var/lib/microdom/download:/app/download \
+  -p 8080:8080 microdom
+
+Daemon:
+docker run --rm -it \
+  -d --restart unless-stopped \
+  -e DBUSER=dompi_web \
+  -e DBPASSWORD=dompi_web \
+  -e DBHOST=192.168.10.32 \
+  -e DBNAME=DB_DOMPIWEB \
+  --name microdom \
+  -v /etc/microdom.conf:/app/etc/microdom.conf \
+  -v /var/log/microdom:/app/logs \
+  -v /var/lib/microdom/html:/app/html \
+  -v /var/lib/microdom/download:/app/download \
+  -p 8080:8080 microdom
+
+
+
+
+docker logs <container-id>
+docker logs -f <container-id>
+
+Con docker compose:
+    docker compose up -d
+    docker compose down
+
+==========================================================================================
+Registrar en GitHub
+
+ssh-keygen -t ed25519 -C mail@mail.mail
+
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+cat ~/.ssh/id_ed25519.pub
+
+
+
+==========================================================================================
+Clone
+    git clone git@github.com:wpirri/microdom.git
+
+
+Para Subit al Git
+    git add .
+    git commit -m "Algun comentario"
+    git push
+
+
+==========================================================================================
+Generar Personal Access Token desde:
+    Perfil -> Settings -> Developer Settings -> Personal Access Tokens
+
+Guardarlo, no se repite.
+Configurar almacen permanente de contraseñas en git
+    git config --global credential.helper store
+Usar el PAT como contraseñas
+
+
+Para subir a GHCR
+    docker build -t microdom:latest .
+    docker tag microdom:latest ghcr.io/wpirri/microdom:latest
+    docker push ghcr.io/wpirri/microdom:latest
+
+1. 	Deployment → reemplaza al "docker run"
+2. 	Service → reemplaza al -p 8080:8080
+3. 	Volumes (hostPath) → reemplazan a los "-v"
+
+Ejecutar desde el repositorio
+docker run --rm -it \
+  -e DBUSER=dompi_web \
+  -e DBPASSWORD=dompi_web \
+  -e DBHOST=192.168.10.32 \
+  -e DBNAME=DB_DOMPIWEB \
+  -v /etc/microdom.conf:/app/etc/microdom.conf \
+  -v /var/log/microdom:/app/logs \
+  -p 8080:8080 \
+  ghcr.io/wpirri/microdom:latest
+
+
+Kbernetes
+==========================================================================================
+kubectl get pods
+kubectl get pods -A
+kubectl apply -f k8s-deployment.yaml
+kubectl describe ingress microdom-ingress
+
+
+# Para reiniciar los pods
+kubectl delete pod -l app=microdom
+
+
+kubectl logs -l app=microdom --tail=200
+
+kubectl get pods
+
+kubectl logs microdom-65fd8dff47-7k8zm --tail=200
+kubectl logs microdom-7cb8b86ccf-dvtsx --tail=200
+
+
+kubectl describe pod -l app=microdom
+
+
+Comparar Git con Kubernetes
+==========================================================================================
+skopeo inspect docker://ghcr.io/wpirri/microdom:latest | jq -r '.Digest'
+kubectl get pod microdom-69765d748f-j5jq6 -o jsonpath="{.status.containerStatuses[0].imageID}"
+
+kubectl rollout restart deployment microdom
+
+==========================================================================================
+Para ver los archivos persistentes
+
+kubectl exec -it deploy/microdom -- sh
+cd /app/logs
+ls -l
+
+==========================================================================================
+Capturar con TCPDUMP
+
+sudo tcpdump -nv tcp port 8080
+
+22:06:40.338307 IP (tos 0x0, ttl 128, id 96, offset 0, flags [DF], proto TCP (6), length 44)
+    192.168.10.174.38036 > 192.168.10.24.8080: Flags [S], cksum 0x0c99 (correct), seq 13802, win 2920, options [mss 1460], length 0
+22:06:40.338481 IP (tos 0x0, ttl 63, id 0, offset 0, flags [DF], proto TCP (6), length 44)
+    192.168.10.24.8080 > 192.168.10.174.38036: Flags [S.], cksum 0x9635 (incorrect -> 0xbf01), seq 441009076, ack 13803, win 64240, options [mss 1460], length 0
+22:06:40.341414 IP (tos 0x0, ttl 128, id 97, offset 0, flags [DF], proto TCP (6), length 40)
+    192.168.10.174.38036 > 192.168.10.24.8080: Flags [.], cksum 0xc647 (correct), ack 1, win 2920, length 0
+22:06:40.382246 IP (tos 0x0, ttl 128, id 98, offset 0, flags [DF], proto TCP (6), length 447)
+    192.168.10.174.38036 > 192.168.10.24.8080: Flags [P.], cksum 0x22e8 (correct), seq 1:408, ack 1, win 2920, length 407: HTTP, length: 407
+        POST /cgi-bin/infoio.cgi HTTP/1.1
+        Host: 192.168.10.24
+        Connection: keep-alive
+        Content-Length: 183
+        User-Agent: Dom32io/1.00 (Microchip;PIC32)
+        Accept: text/html,text/xml
+        Content-Type: application/x-www-form-urlencoded
+
+        ID=c8c9a34a61af&TYP=IO&IO1=1&IO2=1&IO3=0&IO4=1&IO5=0&IO6=0&OUT1=1&OUT2=1&OUT3=0&OUT4=1&CHG=IO1,IO2&ONLINE=1&AT=1.7.3.0(Mar 19 2020 18:15:04)&SDK=3.0.3(8427744)&FW=Feb  6 2026 12:28:06
+22:06:40.382336 IP (tos 0x0, ttl 63, id 52151, offset 0, flags [DF], proto TCP (6), length 40)
+    192.168.10.24.8080 > 192.168.10.174.38036: Flags [.], cksum 0x9631 (incorrect -> 0xd6be), ack 408, win 63833, length 0
+22:06:40.412950 IP (tos 0x0, ttl 63, id 52152, offset 0, flags [DF], proto TCP (6), length 251)
+    192.168.10.24.8080 > 192.168.10.174.38036: Flags [P.], cksum 0x9704 (incorrect -> 0x8639), seq 1:212, ack 408, win 63833, length 211: HTTP, length: 211
+        HTTP/1.1 200 OK
+        date: Thu, 09 Apr 2026 01:06:39 GMT
+        server: uvicorn
+        content-length: 86
+        content-type: application/json
+
+        ["error=0&message=Ok&OUT1=0&OUT3=0&OUT2=0&IO1=1&IO2=0&IO3=0&OUT4=1&IO4=1&IO5=0&IO6=0"]
+22:06:40.417906 IP (tos 0x0, ttl 128, id 99, offset 0, flags [DF], proto TCP (6), length 40)
+    192.168.10.174.38036 > 192.168.10.24.8080: Flags [.], cksum 0xc4b0 (correct), ack 212, win 2709, length 0
+22:06:45.414896 IP (tos 0x0, ttl 63, id 52153, offset 0, flags [DF], proto TCP (6), length 40)
+    192.168.10.24.8080 > 192.168.10.174.38036: Flags [F.], cksum 0x9631 (incorrect -> 0xd5ea), seq 212, ack 408, win 63833, length 0
+22:06:45.426871 IP (tos 0x0, ttl 128, id 105, offset 0, flags [DF], proto TCP (6), length 40)
+    192.168.10.174.38036 > 192.168.10.24.8080: Flags [F.], cksum 0xc4af (correct), seq 408, ack 213, win 2708, length 0
+22:06:45.426971 IP (tos 0x0, ttl 63, id 52154, offset 0, flags [DF], proto TCP (6), length 40)
+    192.168.10.24.8080 > 192.168.10.174.38036: Flags [.], cksum 0x9631 (incorrect -> 0xd5e9), ack 409, win 63833, length 0
+
+=======================================================================================
+
+
+==========================================================================================
+== HTTPS
+==========================================================================================
+Generar certificados para HTTPS
+
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+
+==========================================================================================
+Arranque de uvicorn
+
+uvicorn main:app \
+    --host 0.0.0.0 \
+    --port 8443 \
+    --ssl-keyfile /app/certs/key.pem \
+    --ssl-certfile /app/certs/cert.pem
+
+==========================================================================================
+Estructura
+
+/app/certs/cert.pem
+/app/certs/key.pem
+
+==========================================================================================
+start.sh
+
+#!/bin/bash
+uvicorn main:app \
+    --host 0.0.0.0 \
+    --port 8443 \
+    --ssl-keyfile /app/certs/key.pem \
+    --ssl-certfile /app/certs/cert.pem
+
+==========================================================================================
+DockerFile
+
+CMD ["bash", "/app/start.sh"]
+
+==========================================================================================
+Ejecución
+
+docker run --rm -it \
+  -e DBUSER=dompi_web \
+  -e DBPASSWORD=dompi_web \
+  -e DBHOST=192.168.10.32 \
+  -e DBNAME=DB_DOMPIWEB \
+  -v /etc/microdom.conf:/app/etc/microdom.conf \
+  -v /var/log/microdom:/app/logs \
+  -v /var/lib/microdom/html:/app/html \
+  -v /var/lib/microdom/download:/app/download \
+  -v /etc/ssl/microdom/cert.pem:/app/certs/cert.pem \
+  -v /etc/ssl/microdom/key.pem:/app/certs/key.pem \
+  -p 8443:8443 \
+  microdom
+
