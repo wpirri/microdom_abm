@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from app.log_utils import get_daily_logger
+from app.worker import worker_loop
+import asyncio
 
 from app.routers import download, abm
 
@@ -27,6 +29,14 @@ BASE_DIR = Path("/app/html")  # Cambialo según tu mapeo real
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(worker_loop())
+
+@app.post("/update_form.html")
+def update_form():
+    raise HTTPException(status_code=404, detail="Funcionalidad no implementada")
 
 @app.get("/", response_class=HTMLResponse)
 def index():
@@ -70,3 +80,4 @@ def root(filename: str):
     if not file_path.exists() or not file_path.is_file():
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     return FileResponse(file_path)
+        

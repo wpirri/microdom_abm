@@ -109,6 +109,5 @@ def add_invalid_hardware(mac):
             logger.info(f"Periferico desconocido agregado a la lista: {mac}")
 
 def get_invalid_hardware_list():
-    mysql_execute(f"DELETE FROM TB_DOM_INVALID_PERIF WHERE WHERE Time_Stamp < UNIX_TIMESTAMP() - 600")
     query_result = mysql_query("SELECT MAC FROM TB_DOM_INVALID_PERIF")
     return {"error": 0, "message": "Ok", "response": query_result}
