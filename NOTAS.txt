@@ -172,6 +172,10 @@ docker run --rm -it \
   -p 8080:8080 \
   ghcr.io/wpirri/microdom:latest
 
+La opción de actualización de servicio del ABM requiere acceso al socket Docker del host.
+El script deploy.sh monta ese socket y habilita docker pull/restart para el contenedor microdom.
+Este acceso equivale a permisos administrativos sobre Docker; no debe exponerse a usuarios no confiables.
+
 
 Kbernetes
 ==========================================================================================
@@ -308,4 +312,3 @@ docker run --rm -it \
   -v /etc/ssl/microdom/key.pem:/app/certs/key.pem \
   -p 8443:8443 \
   microdom
-

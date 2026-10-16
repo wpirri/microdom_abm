@@ -5,6 +5,7 @@ ENV TZ=America/Argentina/Buenos_Aires
 # Instalar la base de zonas horarias para que TZ también funcione en la imagen slim.
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata \
+    docker.io \
     && rm -rf /var/lib/apt/lists/*
 
 # Crear usuario no-root

@@ -24,5 +24,6 @@ docker run -it \
   -v /var/log/microdom:/app/logs \
   -v /var/lib/microdom/html:/app/html \
   -v /var/lib/microdom/download:/app/download \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --group-add "$(stat -c '%g' /var/run/docker.sock)" \
   -p 8083:8083 microdom-abm
-
