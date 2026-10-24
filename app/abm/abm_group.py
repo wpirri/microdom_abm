@@ -74,7 +74,9 @@ def delete_group(Id):
     return {"error": 0, "message": "Ok"}
 
 def change_group_by_id(id, accion, parametro=0):
-    query_result = mysql_query(f"SELECT Estado, Listado_Objetos FROM TB_DOM_GROUP WHERE Id = {id};");
+    query_result = mysql_query(f"SELECT Estado, Listado_Objetos FROM TB_DOM_GROUP WHERE Id = {id};")
+    if not query_result:
+        return 0
     estado_grupo = query_result[0]['Estado']
     objetos = query_result[0]['Listado_Objetos'].split(",")
 

@@ -123,14 +123,14 @@ def add_assign_to_planta(id, planta):
 def update_assign_state(mac, port, estado):
     if mac != None and port != None and estado != None:
         #logger.info(f"[update_assign_state] MAC: {mac}, Port: {port}, Estado: {estado}")
-        query = f"UPDATE TB_DOM_ASSIGN SET Estado = {estado} WHERE Dispositivo = (SELECT Id FROM TB_DOM_PERIF WHERE MAC = '{mac}') AND Port = '{port}' AND (Tipo = 1 OR Tipo = 2 OR Tipo = 4 OR Tipo = 6)"
+        query = f"UPDATE TB_DOM_ASSIGN SET Estado = {estado} WHERE Dispositivo = (SELECT Id FROM TB_DOM_PERIF WHERE MAC = '{mac}') AND Port = '{port}' AND (Tipo = 1 OR Tipo = 2 OR Tipo = 4 OR Tipo = 6) AND Estado != {estado}"
         mysql_execute(query)
 
 def get_mobile_assign_list(grupo):
     if grupo:
         query_result = mysql_query(f"SELECT Id, Objeto, Tipo, Icono_Apagado, Icono_Encendido, Estado, Grupo_Visual, Planta, Cord_x, Cord_y FROM TB_DOM_ASSIGN WHERE Grupo_Visual = '{grupo}';")
     else:
-        query_result = mysql_query("SELECT Id, Objeto, Tipo, Icono_Apagado, Icono_Encendido, Estado, Grupo_Visual, Planta, Cord_x, Cord_y, Grupo FROM TB_DOM_ASSIGN;")
+        query_result = mysql_query("SELECT Id, Objeto, Tipo, Icono_Apagado, Icono_Encendido, Estado, Grupo_Visual, Planta, Cord_x, Cord_y FROM TB_DOM_ASSIGN;")
     return {"error": 0, "message": "Ok", "response": query_result if query_result else []}
 
 def switch_mobile_assign(objeto):

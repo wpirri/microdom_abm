@@ -399,7 +399,7 @@ async def abmat_get(request: Request):
         elif funcion == "list":
             return get_task_list()
         elif funcion == "listall":
-            return get_task_list_all(id)
+            return get_task_list_all()
         else:
             logger.info(f"[GET abmat] Función desconocida: {funcion}")
             return {"error": 3, "message": f"Función desconocida: {funcion}"}
@@ -451,7 +451,7 @@ async def abmauto_get(request: Request):
         elif funcion == "list":
             return get_auto_list(tipo)
         elif funcion == "listall":
-            return get_auto_list_all(tipo)
+            return get_auto_list_all()
         else:
             logger.info(f"[GET abmauto] Función desconocida: {funcion}")
             return {"error": 3, "message": f"Función desconocida: {funcion}"}

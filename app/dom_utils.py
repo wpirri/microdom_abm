@@ -158,7 +158,7 @@ def get_hw_update_data(hw_mac_addr, update_io=None):
                 
             mysql_execute(f"UPDATE TB_DOM_PERIF SET Update_Config = 0 WHERE MAC = '{hw_mac_addr}'")
     # Devuelvo todas las configuraciones juntas
-    return firmware + wiegand + io_config + wifi_config
+    return firmware + io_config + wifi_config
 
 def get_assign_status_id(id, planta):
     if id:

@@ -104,9 +104,11 @@ def set_hardware_update_flag(Id, firmware, wifi, ioconfig):
     return {"error": 0, "message": "Ok"}
 
 def add_invalid_hardware(mac):
-    if mysql_execute(f"UPDATE TB_DOM_INVALID_PERIF SET Time_Stamp = UNIX_TIMESTAMP() WHERE WHERE MAC='{mac}'") == 0:
-        if mysql_execute(f"INSERT INTO TB_DOM_INVALID_PERIF (MAC, Time_Stamp) VALUES ({mac}, UNIX_TIMESTAMP())") > 0:
-            logger.info(f"Periferico desconocido agregado a la lista: {mac}")
+    mysql_execute(
+        f"INSERT INTO TB_DOM_INVALID_PERIF (MAC, Ultimo) VALUES ('{mac}', UNIX_TIMESTAMP()) "
+        f"ON DUPLICATE KEY UPDATE Ultimo = UNIX_TIMESTAMP()"
+    )
+    logger.info(f"Periferico desconocido agregado a la lista: {mac}")
 
 def get_invalid_hardware_list():
     query_result = mysql_query("SELECT MAC FROM TB_DOM_INVALID_PERIF")
